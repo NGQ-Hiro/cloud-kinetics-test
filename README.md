@@ -95,13 +95,13 @@ You are given a small CSV file containing online store order data. Each row repr
 
 ### Answer
 
-See [answer_3.py](answer_3.py)
+See [answer_3.py](answer/answer_3.py)
 
 **How to run:**
 
 ```bash
 uv sync
-uv run answer_3.py
+uv run answer/answer_3.py
 ```
 
 Must be run from the repo root — the script reads `./data/orders_sample.csv` as a relative path.
