@@ -27,6 +27,8 @@ You are designing a simple analytics data model for an online store. The busines
 
 ### 1. Tables
 
+![alt text](image.png)
+
 ```
 dim_customer
   customer_id (PK)
@@ -84,9 +86,11 @@ Payment gets its own fact table because it has its own lifecycle (pending → su
 
 A separate `dim_order` table isn't needed unless orders gain their own attributes beyond customer + date (e.g. order channel, shipping address) — until then it would be an unused abstraction.
 
-### 2. Grain of the main fact table (`fact_order_lines`)
+### 2. Grain of the fact tables
 
-One row per order line = one product within one order:
+This design has two fact tables, each at its own grain — they're not merged into one because order lines and payments don't share a 1:1 relationship (one order can have many lines, but each order has one payment record whose status changes over time).
+
+**`fact_order_lines`** — one row per order line = one product within one order:
 
 ```
 order_id | line_id | product_id | quantity | unit_price | line_amount
@@ -96,12 +100,21 @@ order_id | line_id | product_id | quantity | unit_price | line_amount
 
 This is the smallest useful grain: an order can contain many products each with its own quantity, so order-level grain would lose per-product detail (breaking "top-selling products"). There's no finer grain available in the source data.
 
+**`fact_payments`** — one row per payment, current status:
+
+```
+payment_id | order_id | amount | status  | status_updated_at
+5001       | 1001     | 50     | success | 2026-09-20 10:03
+```
+
+Coarser than order-line grain (1 row per order, not per line), because payment status/amount applies to the whole order, not to individual products.
+
 How each business question maps to this design:
 
 | Question | Query shape |
 |---|---|
-| Revenue by day | `SUM(line_amount)` from `fact_order_lines` joined to `dim_date`, grouped by day |
-| Top products/week | `SUM(quantity)` grouped by week + `product_id`, ordered desc |
+| Revenue by day | `SUM(amount)` from `fact_payments` (filtered `status='success'`) joined to `dim_date`, grouped by day |
+| Top products/week | `SUM(quantity)` from `fact_order_lines`, grouped by week + `product_id`, ordered desc |
 | Orders per customer | `COUNT(DISTINCT order_id)` from `fact_order_lines` grouped by `customer_id` |
 | Payment success rate | `COUNT(status='success') / COUNT(*)` from `fact_payments` |
 

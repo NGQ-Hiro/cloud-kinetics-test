@@ -27,7 +27,7 @@ A daily sales pipeline ran successfully at 6:00 AM, but the dashboard now shows 
 
 ### Answer
 
-See [answer_1.md](answer_1.md)
+See [answer_1.md](answer/answer_1.md)
 
 ---
 
@@ -56,7 +56,7 @@ You are designing a simple analytics data model for an online store. The busines
 
 ### Answer
 
-See [answer_2.md](answer_2.md)
+See [answer_2.md](answer/answer_2.md)
 
 ---
 
@@ -95,7 +95,16 @@ You are given a small CSV file containing online store order data. Each row repr
 
 ### Answer
 
-_TODO_
+See [answer_3.py](answer_3.py)
+
+**How to run:**
+
+```bash
+uv sync
+uv run answer_3.py
+```
+
+Must be run from the repo root — the script reads `./data/orders_sample.csv` as a relative path.
 
 ---
 
@@ -115,4 +124,4 @@ Using the data model you designed in Question 2 (customers, products, orders, or
 
 ### Answer
 
-See [answer_4.md](answer_4.md)
+See [answer_4.md](answer/answer_4.md)

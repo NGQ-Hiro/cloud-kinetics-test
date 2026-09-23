@@ -1,0 +1,62 @@
+Table dim_customer {
+  customer_id integer [pk]
+  full_name varchar
+  email varchar
+  signup_date date
+  segment varchar
+}
+
+Table dim_product {
+  product_id integer [pk]
+  product_name varchar
+  category varchar
+  unit_price_current decimal
+}
+
+Table dim_date {
+  date_id integer [pk]
+  full_date date
+  day integer
+  week integer
+  month integer
+  quarter integer
+  year integer
+  day_of_week varchar
+  is_weekend boolean
+}
+
+Table dim_payment_method {
+  payment_method_id integer [pk]
+  method_name varchar
+  provider varchar
+}
+
+Table fact_order_lines {
+  order_line_id integer [pk]
+  order_id integer
+  customer_id integer
+  product_id integer
+  date_id integer
+  quantity integer
+  unit_price decimal
+  line_amount decimal
+}
+
+Table fact_payments {
+  payment_id integer [pk]
+  order_id integer
+  customer_id integer
+  payment_method_id integer
+  date_id integer
+  amount decimal
+  status varchar
+  status_updated_at timestamp
+}
+
+Ref: fact_order_lines.customer_id > dim_customer.customer_id
+Ref: fact_order_lines.product_id > dim_product.product_id
+Ref: fact_order_lines.date_id > dim_date.date_id
+
+Ref: fact_payments.customer_id > dim_customer.customer_id
+Ref: fact_payments.payment_method_id > dim_payment_method.payment_method_id
+Ref: fact_payments.date_id > dim_date.date_id
