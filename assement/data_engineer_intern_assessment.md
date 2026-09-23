@@ -27,7 +27,7 @@ A daily sales pipeline ran successfully at 6:00 AM, but the dashboard now shows 
 
 ### Answer
 
-_TODO_
+See [answer_1.md](answer_1.md)
 
 ---
 
@@ -56,7 +56,7 @@ You are designing a simple analytics data model for an online store. The busines
 
 ### Answer
 
-_TODO_
+See [answer_2.md](answer_2.md)
 
 ---
 
