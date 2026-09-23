@@ -36,8 +36,10 @@ Sums quantity per product per week from `fact_order_lines` (the only table with 
 
 ```sql
 SELECT
-  COUNT(*) FILTER (WHERE status = 'success')::FLOAT / COUNT(*) AS success_rate
+  CAST(SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS success_rate
 FROM fact_payments;
 ```
 
 Success rate = successful payments divided by all payments (success + failed + pending). Assumption: pending counts as "not yet successful" in the denominator — if you want to exclude pending entirely, add `WHERE status IN ('success','failed')`.
+
+(Written with `CASE WHEN` + `CAST` for portability across engines — Postgres/DuckDB also support the shorter `COUNT(*) FILTER (WHERE status = 'success')::FLOAT / COUNT(*)`, but `FILTER` isn't supported in MySQL/SQL Server.)
