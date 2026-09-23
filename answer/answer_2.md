@@ -81,7 +81,7 @@ fact_payments
 
 ### 2. Grain of the fact tables
 
-This design has two fact tables, each at its own grain — they're not merged into one because order lines and payments don't share a 1:1 relationship (one order can have many lines, but each order has one payment record whose status changes over time).
+This design has two fact tables, each at its own grain — they're not merged into one because order lines and payments don't share a 1:1 relationship (one order can have many lines, and an order can have one or more payment attempts, e.g. retries after a failure).
 
 **`fact_order_lines`** — one row per order line = one product within one order:
 
