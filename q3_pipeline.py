@@ -1,7 +1,9 @@
 import pandas as pd
 
+DATA_PATH = "./data/orders_sample.csv"
+
 # 1. Load
-df = pd.read_csv("orders_sample.csv")
+df = pd.read_csv(DATA_PATH)
 
 # 2. Remove exact duplicate rows
 df = df.drop_duplicates()
