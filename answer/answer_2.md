@@ -35,7 +35,6 @@ dim_customer
   full_name
   email
   signup_date
-  segment / tier          -- optional, if business tracks it
 
 dim_product
   product_id (PK)
@@ -48,16 +47,10 @@ dim_date
   full_date
   day
   week
-  month
-  quarter
-  year
-  day_of_week
-  is_weekend
 
 dim_payment_method
   payment_method_id (PK)
   method_name              -- card, bank_transfer, wallet, cash_on_delivery, ...
-  provider                 -- optional, e.g. Stripe/PayPal
 
 fact_order_lines
   order_line_id (PK)       -- surrogate key = hash/concat(order_id, product_id)
@@ -80,11 +73,11 @@ fact_payments
   status_updated_at
 ```
 
-Payment gets its own fact table because it has its own lifecycle (pending → success/failed, status changes over time, potentially multiple attempts) — it isn't a fixed 1:1 attribute of an order the way a dimension should be.
+**Why this design:**
+- Payment is its own fact, not a dimension, because status changes over time (pending → success/failed) — that's event behavior, not a fixed attribute.
+- `fact_order_lines` (order item line), not order-level, because 1 order can hold many products with different quantities — order-level grain can't represent that without arrays/repeated columns.
+- Each dim/fact included is either a key needed to join, or holds data one of the 4 questions or a measure (`line_amount`, `amount`) needs — nothing added speculatively.
 
-`order_id` is kept as a plain (degenerate) column in both facts rather than a FK from one fact to the other, since `fact_order_lines` and `fact_payments` have different grains (order line vs. payment) and a fact should never join to another fact directly. Both facts instead share the same conformed dimensions (`dim_customer`, `dim_date`) directly.
-
-A separate `dim_order` table isn't needed unless orders gain their own attributes beyond customer + date (e.g. order channel, shipping address) — until then it would be an unused abstraction.
 
 ### 2. Grain of the fact tables
 
@@ -100,14 +93,16 @@ order_id | line_id | product_id | quantity | unit_price | line_amount
 
 This is the smallest useful grain: an order can contain many products each with its own quantity, so order-level grain would lose per-product detail (breaking "top-selling products"). There's no finer grain available in the source data.
 
-**`fact_payments`** — one row per payment, current status:
+**`fact_payments`** — one row per payment attempt (retries create new rows, same `order_id`):
 
 ```
 payment_id | order_id | amount | status  | status_updated_at
-5001       | 1001     | 50     | success | 2026-09-20 10:03
+5001       | 1001     | 50     | failed  | 2026-09-20 10:01
+5002       | 1001     | 50     | pending | 2026-09-20 10:02
+5003       | 1001     | 50     | success | 2026-09-20 10:03
 ```
 
-Coarser than order-line grain (1 row per order, not per line), because payment status/amount applies to the whole order, not to individual products.
+Same `order_id` can appear more than once — each retry is a new `payment_id` row (grain = one row per payment attempt, not per order). This is why `order_id` can't be the payment table's primary key.
 
 How each business question maps to this design:
 
@@ -127,4 +122,3 @@ Because 1 order can contain many products, each with its own quantity. Without i
 - Denormalization/duplication: product name, price, etc. repeated on every order row — wastes space and risks inconsistency if a product's details change.
 - Update anomalies: renaming a product means updating every historical order row instead of one row in `dim_product`.
 - Loses history: if price is only stored on the product (not the order line), you can't tell what the customer actually paid at purchase time — the fact table needs its own `unit_price`/`line_amount` snapshot at the time of sale.
-- Can't represent multiple products per order without repeating columns (product_1, qty_1, product_2, qty_2, ...) or JSON blobs — neither aggregates well in SQL.
